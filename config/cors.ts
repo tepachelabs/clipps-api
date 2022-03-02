@@ -117,7 +117,7 @@ const corsConfig: CorsConfig = {
   | https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Credentials
   |
   */
-  credentials: true,
+  credentials: false,
 
   /*
   |--------------------------------------------------------------------------
