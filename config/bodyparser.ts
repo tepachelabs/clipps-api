@@ -131,7 +131,7 @@ const bodyParserConfig: BodyParserConfig = {
     | projects/:id/file
     | ```
     */
-    processManually: [],
+    processManually: ['/api/videos'],
 
     /*
     |--------------------------------------------------------------------------
