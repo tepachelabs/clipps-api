@@ -33,4 +33,4 @@ Route.group(() => {
     Route.get('profile', 'ProfilesController.me')
     Route.resource('videos', 'VideosController')
   }).middleware('auth:api')
-}).prefix('api')
+}).prefix('v1')
