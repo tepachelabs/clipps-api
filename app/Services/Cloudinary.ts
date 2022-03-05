@@ -8,11 +8,11 @@ cloudinary.config({
 })
 
 class Cloudinary {
-  public upload(file: any, userEmail: string) {
+  public upload(file: any, folder: string) {
     return new Promise(async (resolve, reject) => {
       try {
         let response = await cloudinary.uploader.upload(file.tmpPath, {
-          folder: `user-clips/${userEmail}`,
+          folder,
           resource_type: 'video',
         })
 

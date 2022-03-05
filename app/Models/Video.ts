@@ -33,7 +33,13 @@ export default class Video extends BaseModel {
   public originalFilename: string
 
   @column()
+  public posterUrl: string
+
+  @column()
   public duration: number
+
+  @column()
+  public bytes: number
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime

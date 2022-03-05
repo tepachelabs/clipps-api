@@ -9,10 +9,13 @@ export default class Profile extends BaseModel {
   public userId: number
 
   @column()
-  public firstName?: string
+  public username?: string
 
   @column()
-  public lastName?: string
+  public avatar?: string
+
+  @column()
+  public bytesUsed?: number
 
   @column.dateTime({ autoCreate: true })
   public createdAt: DateTime

@@ -1,4 +1,5 @@
 import { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
+import Env from '@ioc:Adonis/Core/Env'
 import { adjectives, animals, colors, Config, uniqueNamesGenerator } from 'unique-names-generator'
 
 import Cloudinary from 'App/Services/Cloudinary'
@@ -10,6 +11,7 @@ const customConfig: Config = {
   dictionaries: [adjectives, colors, animals],
   separator: '-',
 }
+const getPosterUrl = (videoUrl: string) => videoUrl.replace(/\.(mp4|mov)$/, '.jpg')
 
 interface CloudinaryResponse {
   duration: string
@@ -20,6 +22,8 @@ interface CloudinaryResponse {
   width: number
   public_id: string
   asset_id: string
+  bytes: number
+  metadata: object
 }
 
 export default class VideosController {
@@ -49,7 +53,7 @@ export default class VideosController {
       if (request.file('video')) {
         const response = (await Cloudinary.upload(
           request.file('video', { size: '100mb' }),
-          user.email
+          Env.get('NODE_ENV') === 'production' ? `user-clips/${user.email}` : 'test'
         )) as CloudinaryResponse
 
         const video = new Video()
@@ -63,6 +67,8 @@ export default class VideosController {
         video.secureUrl = response.secure_url
         video.originalFilename = response.original_filename
         video.duration = parseInt(response.duration, 10)
+        video.posterUrl = getPosterUrl(response.secure_url)
+        video.bytes = response.bytes
 
         await user.related('videos').save(video)
         await video.refresh()
