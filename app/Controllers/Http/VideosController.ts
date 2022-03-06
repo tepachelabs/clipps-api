@@ -6,6 +6,7 @@ import Cloudinary from 'App/Services/Cloudinary'
 import Video from 'App/Models/Video'
 import { newVideoSchema } from 'App/Schemas/NewVideoSchema'
 import { videoSerializer } from 'App/Serializers/VideoSerializer'
+import Profile from 'App/Models/Profile'
 
 const customConfig: Config = {
   dictionaries: [adjectives, colors, animals],
@@ -47,10 +48,20 @@ export default class VideosController {
   }
 
   public async store({ auth, request }: HttpContextContract) {
-    const user = await auth.authenticate()
+    const requestFile = request.file('video')
 
     try {
       if (request.file('video')) {
+        const user = await auth.authenticate()
+        const profile = await Profile.query().where('user_id', user.id).limit(1).first()
+
+        if (!profile) return { status: false, message: 'Profile not found.' }
+
+        const currentBytes = profile.bytesUsed || 0
+        const nextQuota = currentBytes + (requestFile?.size || 0)
+
+        if (nextQuota > 980000000) return { status: false, message: 'Quota exceeded!' }
+
         const response = (await Cloudinary.upload(
           request.file('video', { size: '100mb' }),
           Env.get('NODE_ENV') === 'production' ? `user-clips/${user.email}` : 'test'
@@ -72,6 +83,8 @@ export default class VideosController {
 
         await user.related('videos').save(video)
         await video.refresh()
+        profile.bytesUsed = nextQuota
+        await profile.save()
 
         return videoSerializer(video)
       }
