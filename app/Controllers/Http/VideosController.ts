@@ -47,7 +47,7 @@ export default class VideosController {
     return videoSerializer(video)
   }
 
-  public async store({ auth, request }: HttpContextContract) {
+  public async store({ auth, request, response }: HttpContextContract) {
     const requestFile = request.file('video')
 
     try {
@@ -55,14 +55,18 @@ export default class VideosController {
         const user = await auth.authenticate()
         const profile = await Profile.query().where('user_id', user.id).limit(1).first()
 
-        if (!profile) return { status: false, message: 'Profile not found.' }
+        if (!profile) {
+          return response.status(403).send('Profile not found.')
+        }
 
         const currentBytes = profile.bytesUsed || 0
         const nextQuota = currentBytes + (requestFile?.size || 0)
 
-        if (nextQuota > 980000000) return { status: false, message: 'Quota exceeded!' }
+        if (nextQuota > 980000000) {
+          return response.status(413).send('Quota exceeded!')
+        }
 
-        const response = (await Cloudinary.upload(
+        const cloudinaryResponse = (await Cloudinary.upload(
           request.file('video', { size: '100mb' }),
           Env.get('NODE_ENV') === 'production' ? `user-clips/${user.email}` : 'test'
         )) as CloudinaryResponse
@@ -70,16 +74,16 @@ export default class VideosController {
         const video = new Video()
 
         video.title = uniqueNamesGenerator(customConfig)
-        video.assetId = response.asset_id
-        video.publicId = response.public_id
-        video.width = response.width
-        video.height = response.height
-        video.format = response.format
-        video.secureUrl = response.secure_url
-        video.originalFilename = response.original_filename
-        video.duration = parseInt(response.duration, 10)
-        video.posterUrl = getPosterUrl(response.secure_url)
-        video.bytes = response.bytes
+        video.assetId = cloudinaryResponse.asset_id
+        video.publicId = cloudinaryResponse.public_id
+        video.width = cloudinaryResponse.width
+        video.height = cloudinaryResponse.height
+        video.format = cloudinaryResponse.format
+        video.secureUrl = cloudinaryResponse.secure_url
+        video.originalFilename = cloudinaryResponse.original_filename
+        video.duration = parseInt(cloudinaryResponse.duration, 10)
+        video.posterUrl = getPosterUrl(cloudinaryResponse.secure_url)
+        video.bytes = cloudinaryResponse.bytes
 
         await user.related('videos').save(video)
         await video.refresh()
@@ -89,10 +93,10 @@ export default class VideosController {
         return videoSerializer(video)
       }
 
-      return { status: false, message: 'Please upload a video.' }
+      return response.status(400).send('Please upload a video.')
     } catch (error) {
       console.error(error)
-      return { status: false, error: error.message }
+      return response.status(400).send(error.message)
     }
   }
 
