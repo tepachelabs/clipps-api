@@ -8,6 +8,8 @@ import { newVideoSchema } from 'App/Schemas/NewVideoSchema'
 import { videoSerializer } from 'App/Serializers/VideoSerializer'
 import Profile from 'App/Models/Profile'
 
+const QUOTA_LIMIT_PER_ACCOUNT = 980000000
+
 const customConfig: Config = {
   dictionaries: [adjectives, colors, animals],
   separator: '-',
@@ -28,9 +30,15 @@ interface CloudinaryResponse {
 }
 
 export default class VideosController {
-  public async index({ auth }: HttpContextContract) {
+  public async index({ auth, request }: HttpContextContract) {
     const user = await auth.authenticate()
-    const videos = await Video.query().where('user_id', user.id).whereNull('deleted_at')
+    const { deleted: includedDeleted } = request.qs()
+
+    const videos = await Video.query()
+      .where('user_id', user.id)
+      .unless(includedDeleted, (query) => {
+        query.whereNull('deleted_at')
+      })
 
     return videos.map(videoSerializer)
   }
@@ -62,7 +70,7 @@ export default class VideosController {
         const currentBytes = profile.bytesUsed || 0
         const nextQuota = currentBytes + (requestFile?.size || 0)
 
-        if (nextQuota > 980000000) {
+        if (nextQuota > QUOTA_LIMIT_PER_ACCOUNT) {
           return response.status(413).send('Quota exceeded!')
         }
 
@@ -100,7 +108,7 @@ export default class VideosController {
     }
   }
 
-  public async update({ auth, request }: HttpContextContract) {
+  public async update({ auth, request, response }: HttpContextContract) {
     const { title } = await request.validate({ schema: newVideoSchema })
     const user = await auth.authenticate()
     const { id } = request.params()
@@ -112,7 +120,7 @@ export default class VideosController {
       .limit(1)
       .first()
 
-    if (!video) return { status: false, message: 'Video not found.' }
+    if (!video) return response.status(400).send('Video not found.')
 
     video.title = title
     await video.save()
@@ -120,14 +128,32 @@ export default class VideosController {
     return videoSerializer(video)
   }
 
-  public async destroy({ auth, request }: HttpContextContract) {
+  public async destroy({ auth, request, response }: HttpContextContract) {
+    const { permanent } = request.qs()
     const { id } = request.params()
     const user = await auth.authenticate()
 
-    await Video.query()
-      .where('asset_id', id)
-      .where('user_id', user.id)
-      .update({ deleted_at: new Date() })
+    if (permanent) {
+      const video = await Video.query().where('asset_id', id).where('user_id', user.id).first()
+      if (!video) return response.status(400).send('Video not found.')
+
+      const profile = await Profile.query().where('user_id', user.id).limit(1).first()
+      if (!profile) return response.status(403).send('Profile not found.')
+
+      await Cloudinary.destroy(video.publicId)
+      video.isPermanentDeleted = true
+      await video.save()
+
+      const currentBytes = profile.bytesUsed || 0
+      profile.bytesUsed = currentBytes - video.bytes
+      await profile.save()
+    } else {
+      // soft delete
+      await Video.query()
+        .where('asset_id', id)
+        .where('user_id', user.id)
+        .update({ deleted_at: new Date() })
+    }
 
     return 'ok'
   }

@@ -19,6 +19,7 @@ export default class Videos extends BaseSchema {
       table.string('poster_url')
       table.integer('duration')
       table.integer('bytes')
+      table.boolean('is_permanent_deleted')
 
       /**
        * Uses timestamptz for PostgreSQL and DATETIME2 for MSSQL

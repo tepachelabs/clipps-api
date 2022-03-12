@@ -22,6 +22,20 @@ class Cloudinary {
       }
     })
   }
+
+  public destroy(publicId: string) {
+    return new Promise(async (resolve, reject) => {
+      try {
+        let response = await cloudinary.uploader.destroy(publicId, {
+          resource_type: 'video',
+        })
+
+        resolve(response)
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
 }
 
 export default new Cloudinary()
