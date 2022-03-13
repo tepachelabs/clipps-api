@@ -1,5 +1,6 @@
 import { schema } from '@ioc:Adonis/Core/Validator'
 
-export const newVideoSchema = schema.create({
+export const updateVideoSchema = schema.create({
   title: schema.string({ escape: true, trim: true }),
+  deletedAt: schema.date.optional(),
 })

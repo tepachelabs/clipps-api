@@ -4,7 +4,7 @@ import { adjectives, animals, colors, Config, uniqueNamesGenerator } from 'uniqu
 
 import Cloudinary from 'App/Services/Cloudinary'
 import Video from 'App/Models/Video'
-import { newVideoSchema } from 'App/Schemas/NewVideoSchema'
+import { updateVideoSchema } from 'App/Schemas/UpdateVideoSchema'
 import { videoSerializer } from 'App/Serializers/VideoSerializer'
 import Profile from 'App/Models/Profile'
 
@@ -110,20 +110,20 @@ export default class VideosController {
   }
 
   public async update({ auth, request, response }: HttpContextContract) {
-    const { title } = await request.validate({ schema: newVideoSchema })
+    const { title, deletedAt } = await request.validate({ schema: updateVideoSchema })
     const user = await auth.authenticate()
     const { id } = request.params()
 
     const video = await Video.query()
       .where('asset_id', id)
       .where('user_id', user.id)
-      .whereNull('deleted_at')
       .limit(1)
       .first()
 
     if (!video) return response.status(400).send('Video not found.')
 
     video.title = title
+    video.deletedAt = deletedAt || null
     await video.save()
 
     return videoSerializer(video)
