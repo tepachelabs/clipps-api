@@ -36,6 +36,7 @@ export default class VideosController {
 
     const videos = await Video.query()
       .where('user_id', user.id)
+      .whereNull('is_permanent_deleted')
       .unless(includedDeleted, (query) => {
         query.whereNull('deleted_at')
       })
