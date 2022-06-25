@@ -28,6 +28,7 @@ Route.group(() => {
   Route.post('register', 'AuthController.register')
   Route.post('login', 'AuthController.login')
   Route.get('video/:assetId', 'VideosController.show')
+  Route.get('invites/:code', 'InvitesController.check')
 
   Route.group(() => {
     Route.get('profile', 'ProfilesController.me')

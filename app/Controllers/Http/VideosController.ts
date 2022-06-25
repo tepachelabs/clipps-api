@@ -8,7 +8,7 @@ import { updateVideoSchema } from 'App/Schemas/UpdateVideoSchema'
 import { videoSerializer } from 'App/Serializers/VideoSerializer'
 import Profile from 'App/Models/Profile'
 
-const QUOTA_LIMIT_PER_ACCOUNT = 980000000
+const QUOTA_LIMIT_PER_ACCOUNT = 980000000 // ~100MB
 
 const customConfig: Config = {
   dictionaries: [adjectives, colors, animals],
