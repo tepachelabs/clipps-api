@@ -44,7 +44,7 @@ export default class VideosController {
     return videos.map(videoSerializer)
   }
 
-  public async show({ request }: HttpContextContract) {
+  public async show({ request, response }: HttpContextContract) {
     const { assetId } = request.params()
 
     const video = await Video.query()
@@ -52,6 +52,10 @@ export default class VideosController {
       .whereNull('deleted_at')
       .limit(1)
       .first()
+
+    if (!video) {
+      return response.status(404).send('Video not found.')
+    }
 
     return videoSerializer(video)
   }
