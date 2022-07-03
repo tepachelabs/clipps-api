@@ -7,7 +7,7 @@ Requirements:
 Install dependencies
 
 ```shell
-$ yarn
+$ npm install
 ```
 
 Create `.env` file with this config:
@@ -29,6 +29,7 @@ PG_DB_NAME=lucid
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+CLOUDINARY_WEBHOOK=
 CACHE_VIEWS=
 ```
 
