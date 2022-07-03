@@ -28,7 +28,7 @@ export default class AuthController {
     const payload = await request.validate({ schema: newUserInvitedSchema })
     const invite = await Invite.query().where('code', payload.code).limit(1).first()
 
-    if (!invite) return response.status(400).send('Invite code is not valid.')
+    if (!invite || invite.inviteeId) return response.status(400).send('Invite code is not valid.')
 
     const newUser = new User()
 
