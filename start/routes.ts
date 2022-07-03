@@ -29,6 +29,7 @@ Route.group(() => {
   Route.post('login', 'AuthController.login')
   Route.get('video/:id', 'VideosController.anonymousShow')
   Route.get('invites/:code', 'InvitesController.check')
+  Route.post('video-processed', 'VideosController.videoProcessed')
 
   Route.group(() => {
     Route.get('profile', 'ProfilesController.me')
