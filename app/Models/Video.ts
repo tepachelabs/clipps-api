@@ -42,6 +42,9 @@ export default class Video extends BaseModel {
   public bytes: number
 
   @column()
+  public isPrivate: boolean
+
+  @column()
   public isPermanentDeleted: boolean
 
   @column.dateTime({ autoCreate: true })

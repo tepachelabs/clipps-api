@@ -12,6 +12,7 @@ export const videoSerializer = (video: LucidRow | null) => {
         'created_at',
         'deleted_at',
         'bytes',
+        'is_private',
       ],
     },
   })

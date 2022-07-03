@@ -27,7 +27,7 @@ Route.get('/', async () => {
 Route.group(() => {
   Route.post('register', 'AuthController.register')
   Route.post('login', 'AuthController.login')
-  Route.get('video/:assetId', 'VideosController.show')
+  Route.get('video/:id', 'VideosController.anonymousShow')
   Route.get('invites/:code', 'InvitesController.check')
 
   Route.group(() => {

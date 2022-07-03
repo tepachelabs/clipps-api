@@ -30,6 +30,23 @@ interface CloudinaryResponse {
 }
 
 export default class VideosController {
+  public async anonymousShow({ request, response }: HttpContextContract) {
+    const { id } = request.params()
+
+    const video = await Video.query()
+      .where('asset_id', id)
+      .whereNull('deleted_at')
+      .where('is_private', false)
+      .limit(1)
+      .first()
+
+    if (!video) {
+      return response.status(404).send('Video not found.')
+    }
+
+    return videoSerializer(video)
+  }
+
   public async index({ auth, request }: HttpContextContract) {
     const user = await auth.authenticate()
     const { deleted: includedDeleted } = request.qs()
@@ -44,16 +61,17 @@ export default class VideosController {
     return videos.map(videoSerializer)
   }
 
-  public async show({ request, response }: HttpContextContract) {
-    const { assetId } = request.params()
+  public async show({ auth, request, response }: HttpContextContract) {
+    const user = await auth.authenticate()
+    const { id } = request.params()
 
-    const video = await Video.query()
-      .where('asset_id', assetId)
-      .whereNull('deleted_at')
-      .limit(1)
-      .first()
+    const video = await Video.query().where('asset_id', id).whereNull('deleted_at').limit(1).first()
 
     if (!video) {
+      return response.status(404).send('Video not found.')
+    }
+
+    if (video.isPrivate && video.userId !== user?.id) {
       return response.status(404).send('Video not found.')
     }
 
@@ -97,6 +115,7 @@ export default class VideosController {
         video.duration = parseInt(cloudinaryResponse.duration, 10)
         video.posterUrl = getPosterUrl(cloudinaryResponse.secure_url)
         video.bytes = cloudinaryResponse.bytes
+        video.isPrivate = false
 
         await user.related('videos').save(video)
         await video.refresh()
@@ -114,7 +133,7 @@ export default class VideosController {
   }
 
   public async update({ auth, request, response }: HttpContextContract) {
-    const { title, deletedAt } = await request.validate({ schema: updateVideoSchema })
+    const { title, deletedAt, isPrivate } = await request.validate({ schema: updateVideoSchema })
     const user = await auth.authenticate()
     const { id } = request.params()
 
@@ -128,6 +147,7 @@ export default class VideosController {
 
     video.title = title
     video.deletedAt = deletedAt || null
+    video.isPrivate = Boolean(isPrivate)
     await video.save()
 
     return videoSerializer(video)
