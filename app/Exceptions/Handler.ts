@@ -23,20 +23,24 @@ export default class ExceptionHandler extends HttpExceptionHandler {
   }
 
   public async handle(error, ctx) {
+    console.error(error)
     Sentry.captureException(error)
     return super.handle(error, ctx)
   }
 
   public async report(error, ctx) {
     if (!this.shouldReport(error)) {
+      console.info(error)
       return
     }
 
     if (typeof error.report === 'function') {
+      console.warn(error)
       error.report(error, ctx)
       return
     }
 
+    console.error(error)
     Sentry.captureException(error)
   }
 }
