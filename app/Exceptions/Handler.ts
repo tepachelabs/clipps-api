@@ -26,4 +26,17 @@ export default class ExceptionHandler extends HttpExceptionHandler {
     Sentry.captureException(error)
     return super.handle(error, ctx)
   }
+
+  public async report(error, ctx) {
+    if (!this.shouldReport(error)) {
+      return
+    }
+
+    if (typeof error.report === 'function') {
+      error.report(error, ctx)
+      return
+    }
+
+    Sentry.captureException(error)
+  }
 }

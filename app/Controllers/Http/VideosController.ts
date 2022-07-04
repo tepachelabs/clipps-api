@@ -197,7 +197,9 @@ export default class VideosController {
     const cloudinaryTimestamp = request.header('X-Cld-Timestamp')
     const cloudinarySignature = request.header('X-Cld-Signature')
 
-    if (!cloudinaryTimestamp || !cloudinarySignature) return response.status(200)
+    if (!cloudinaryTimestamp || !cloudinarySignature) {
+      throw new Error('Cloudinary signature failed')
+    }
 
     // Next is to verify the signature, this includes the API's secret key; and
     // a timestamp verification so the request was created within the last 30 mins
@@ -207,19 +209,22 @@ export default class VideosController {
       cloudinarySignature
     )
 
-    if (!isValidSignature) return response.status(200)
+    if (!isValidSignature) {
+      throw new Error('Cloudinary signature failed')
+    }
 
     // Finally, we check the video actually exists
     const video = await Video.query().where('asset_id', asset_id).limit(1).first()
 
     // If video does not exist OR if it already has an url, just abort
     // Every video can be set its URL once by this API.
-    if (!video || video.secureUrl) return response.status(200)
+    if (!video || video.secureUrl) throw new Error('Video not found')
 
     const patch = eager[0]
     video.secureUrl = patch.secure_url
     video.width = patch.width
     video.height = patch.height
     await video.save()
+    return response.status(200)
   }
 }
