@@ -32,7 +32,7 @@ interface CloudinaryResponse {
 }
 
 export default class VideosController {
-  public async anonymousShow({ request, response }: HttpContextContract) {
+  public async anonymousShow({ request }: HttpContextContract) {
     const { id } = request.params()
 
     const video = await Video.query()
@@ -43,7 +43,7 @@ export default class VideosController {
       .first()
 
     if (!video) {
-      return response.status(404).send('Video not found.')
+      throw new Error('Video not found')
     }
 
     return videoSerializer(video)
