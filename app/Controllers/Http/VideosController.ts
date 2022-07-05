@@ -51,14 +51,20 @@ export default class VideosController {
 
   public async index({ auth, request }: HttpContextContract) {
     const user = await auth.authenticate()
-    const { deleted: includedDeleted } = request.qs()
+    const { deleted: includeDeleted } = request.qs()
 
     const videos = await Video.query()
       .where('user_id', user.id)
-      .whereNull('is_permanent_deleted')
-      .unless(includedDeleted, (query) => {
-        query.whereNull('deleted_at')
-      })
+      .andWhere('is_permanent_deleted', false)
+      .if(
+        includeDeleted,
+        (query) => {
+          query.andWhereNotNull('deleted_at')
+        },
+        (query) => {
+          query.andWhereNull('deleted_at')
+        }
+      )
 
     return videos.map(videoSerializer)
   }
@@ -147,7 +153,7 @@ export default class VideosController {
 
     if (!video) return response.status(400).send('Video not found.')
 
-    video.title = title
+    video.title = title || video.title
     video.deletedAt = deletedAt || null
     video.isPrivate = Boolean(isPrivate)
     await video.save()
