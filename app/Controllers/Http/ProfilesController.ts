@@ -13,6 +13,6 @@ export default class ProfilesController {
       .andWhere('is_permanent_deleted', false)
       .count('*', 'total')
 
-    return { ...profileSerializer(profile), videos_in_trash: videos[0].$extras.total || 0 }
+    return { ...profileSerializer(profile), videos_in_trash: Number(videos[0].$extras.total) || 0 }
   }
 }
